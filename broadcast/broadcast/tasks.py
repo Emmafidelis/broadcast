@@ -23,6 +23,7 @@ def mark_missed_advertisements():
         WHERE status = 'Scheduled'
         AND CONCAT(scheduled_date, ' ', scheduled_time) < %s
         AND docstatus = 1
+        AND IFNULL(repeat_interval_minutes, 0) = 0
     """,
         (threshold_time,),
     )
@@ -84,7 +85,10 @@ def check_autoplay_queue():
             """
             SELECT name
             FROM `tabAdvertisement Broadcast`
-            WHERE status = 'Scheduled'
+            WHERE (
+                status = 'Scheduled'
+                OR (status = 'Aired' AND IFNULL(repeat_interval_minutes, 0) > 0)
+            )
             AND docstatus = 1
             AND autoplay_enabled = 1
             AND TIMESTAMP(scheduled_date, scheduled_time) BETWEEN %s AND %s
@@ -160,6 +164,34 @@ def trigger_autoplay(advertisement_id):
             reference_doctype="Advertisement Broadcast",
             reference_name=ad_doc.name,
         )
+
+        if ad_doc.repeat_interval_minutes:
+            scheduled_dt = get_datetime(
+                f"{ad_doc.scheduled_date} {ad_doc.scheduled_time}"
+            )
+            next_dt = add_to_date(
+                scheduled_dt, minutes=ad_doc.repeat_interval_minutes
+            )
+            if ad_doc.repeat_until_date and next_dt.date() > ad_doc.repeat_until_date:
+                frappe.db.set_value(
+                    "Advertisement Broadcast",
+                    ad_doc.name,
+                    {
+                        "autoplay_enabled": 0,
+                        "repeat_interval_minutes": 0,
+                    },
+                    update_modified=False,
+                )
+            else:
+                frappe.db.set_value(
+                    "Advertisement Broadcast",
+                    ad_doc.name,
+                    {
+                        "scheduled_date": next_dt.date().isoformat(),
+                        "scheduled_time": next_dt.time().strftime("%H:%M:%S"),
+                    },
+                    update_modified=False,
+                )
 
     except Exception as e:
         frappe.log_error(

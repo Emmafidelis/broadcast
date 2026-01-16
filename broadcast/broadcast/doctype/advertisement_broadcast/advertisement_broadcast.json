@@ -14,6 +14,8 @@
   "customer",
   "scheduled_date",
   "scheduled_time",
+  "repeat_interval_minutes",
+  "repeat_until_date",
   "duration_seconds",
   "rate_per_second",
   "sales_order",
@@ -77,6 +79,18 @@
    "in_list_view": 1,
    "label": "Scheduled Time",
    "reqd": 1
+  },
+  {
+   "fieldname": "repeat_interval_minutes",
+   "fieldtype": "Int",
+   "label": "Repeat Every (Minutes)",
+   "description": "Leave empty for one-time broadcast"
+  },
+  {
+   "fieldname": "repeat_until_date",
+   "fieldtype": "Date",
+   "label": "Repeat Until",
+   "description": "Optional end date for repeating broadcasts"
   },
   {
    "fieldname": "duration_seconds",

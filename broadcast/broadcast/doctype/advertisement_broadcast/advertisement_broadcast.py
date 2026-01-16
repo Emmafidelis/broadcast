@@ -22,6 +22,7 @@ class AdvertisementBroadcast(Document):
 		"""Validate document before saving"""
 		self.calculate_total_amount()
 		self.validate_schedule()
+		self.validate_repeat_settings()
 		self.sync_status_from_context()
 		self.validate_status_transition()
 
@@ -90,6 +91,18 @@ class AdvertisementBroadcast(Document):
 		):
 			if scheduled_datetime < now_datetime():
 				frappe.throw(_("Cannot reschedule advertisement to the past"))
+
+	def validate_repeat_settings(self):
+		"""Validate repeat interval configuration"""
+		if self.repeat_interval_minutes and self.repeat_interval_minutes < 1:
+			frappe.throw(_("Repeat interval must be at least 1 minute"))
+
+		if self.repeat_until_date and not self.repeat_interval_minutes:
+			frappe.throw(_("Repeat interval is required when Repeat Until is set"))
+
+		if self.repeat_until_date and self.scheduled_date:
+			if get_datetime(self.repeat_until_date) < get_datetime(self.scheduled_date):
+				frappe.throw(_("Repeat Until cannot be before Scheduled Date"))
 
 	def validate_status_transition(self):
 		"""Validate status transitions according to workflow rules"""
