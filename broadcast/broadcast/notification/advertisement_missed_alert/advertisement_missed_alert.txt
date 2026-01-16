@@ -1,0 +1,9 @@
+URGENT: Advertisement has been marked as MISSED
+        
+Advertisement: {{ doc.advertisement_title }}
+Customer: {{ doc.customer }}
+Scheduled: {{ doc.scheduled_date }} at {{ doc.scheduled_time }}
+Presenter: {{ doc.presenter }}
+Potential Revenue Loss: {{ doc.total_amount }}
+
+Immediate action required!

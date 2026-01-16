@@ -1,0 +1,30 @@
+{
+ "attach_print": 0,
+ "channel": "Email",
+ "condition": "doc.status == 'Missed'",
+ "creation": "2025-09-14 18:35:30.523502",
+ "days_in_advance": 0,
+ "docstatus": 0,
+ "doctype": "Notification",
+ "document_type": "Advertisement Broadcast",
+ "enabled": 1,
+ "event": "Value Change",
+ "idx": 0,
+ "is_standard": 1,
+ "message": "URGENT: Advertisement has been marked as MISSED\n        \nAdvertisement: {{ doc.advertisement_title }}\nCustomer: {{ doc.customer }}\nScheduled: {{ doc.scheduled_date }} at {{ doc.scheduled_time }}\nPresenter: {{ doc.presenter }}\nPotential Revenue Loss: {{ doc.total_amount }}\n\nImmediate action required!",
+ "message_type": "Plain Text",
+ "modified": "2025-09-14 18:35:30.523502",
+ "modified_by": "Administrator",
+ "module": "Broadcast",
+ "name": "Advertisement Missed Alert",
+ "owner": "Administrator",
+ "recipients": [
+  {
+   "receiver_by_role": "System Manager"
+  }
+ ],
+ "send_system_notification": 0,
+ "send_to_all_assignees": 1,
+ "subject": "URGENT: Advertisement Missed - {{ doc.advertisement_title }}",
+ "value_changed": "status"
+}
