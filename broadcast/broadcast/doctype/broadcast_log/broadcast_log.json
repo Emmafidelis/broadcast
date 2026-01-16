@@ -1,0 +1,82 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-09-14 00:00:00",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "actual_broadcast_datetime",
+  "actual_duration",
+  "broadcast_type",
+  "detection_confidence",
+  "logged_by",
+  "notes",
+  "variance_seconds"
+ ],
+ "fields": [
+  {
+   "fieldname": "actual_broadcast_datetime",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Actual Broadcast DateTime",
+   "reqd": 1
+  },
+  {
+   "fieldname": "actual_duration",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Actual Duration (Seconds)",
+   "reqd": 1
+  },
+  {
+   "default": "Manual Entry",
+   "fieldname": "broadcast_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Broadcast Type",
+   "options": "\nManual Entry\nAuto Detection\nAPI Integration",
+   "reqd": 1
+  },
+  {
+   "description": "For auto-detected broadcasts",
+   "fieldname": "detection_confidence",
+   "fieldtype": "Percent",
+   "label": "Detection Confidence"
+  },
+  {
+   "fieldname": "logged_by",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Logged By",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "description": "Difference from scheduled time",
+   "fieldname": "variance_seconds",
+   "fieldtype": "Int",
+   "label": "Time Variance (Seconds)",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2025-09-14 18:07:15.231977",
+ "modified_by": "Administrator",
+ "module": "Broadcast",
+ "name": "Broadcast Log",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
