@@ -3,7 +3,7 @@
 
 import frappe
 from frappe import _
-from frappe.utils import flt, getdate, add_days
+from frappe.utils import flt
 
 
 def execute(filters=None):
@@ -71,66 +71,86 @@ def get_columns():
 
 
 def get_data(filters):
-    conditions = ["docstatus = 1"]
-    values = {}
-    
-    if filters.get("from_date"):
-        conditions.append("scheduled_date >= %(from_date)s")
-        values["from_date"] = filters.get("from_date")
-    
-    if filters.get("to_date"):
-        conditions.append("scheduled_date <= %(to_date)s")
-        values["to_date"] = filters.get("to_date")
-    
-    if filters.get("presenter"):
-        conditions.append("presenter = %(presenter)s")
-        values["presenter"] = filters.get("presenter")
+    filters_list = [["docstatus", "=", 1]]
 
-    where_clause = " AND ".join(conditions)
-    
-    data = frappe.db.sql(
-        """
-        SELECT 
-            presenter,
-            COUNT(*) as total_scheduled,
-            SUM(CASE WHEN status = 'Aired' THEN 1 ELSE 0 END) as total_aired,
-            SUM(CASE WHEN status = 'Missed' THEN 1 ELSE 0 END) as total_missed,
-            ROUND(
-                (SUM(CASE WHEN status = 'Aired' THEN 1 ELSE 0 END) * 100.0 / COUNT(*)), 
-                2
-            ) as success_rate,
-            SUM(CASE WHEN status = 'Aired' THEN total_amount ELSE 0 END) as revenue_generated,
-            SUM(CASE WHEN status = 'Missed' THEN total_amount ELSE 0 END) as revenue_lost
-        FROM `tabAdvertisement Broadcast`
-        WHERE %s
-        GROUP BY presenter
-        ORDER BY success_rate DESC
-    """,
-        where_clause,
-        values,
-        as_dict=True,
+    if filters.get("from_date"):
+        filters_list.append(["scheduled_date", ">=", filters.get("from_date")])
+
+    if filters.get("to_date"):
+        filters_list.append(["scheduled_date", "<=", filters.get("to_date")])
+
+    if filters.get("presenter"):
+        filters_list.append(["presenter", "=", filters.get("presenter")])
+
+    ads = frappe.get_all(
+        "Advertisement Broadcast",
+        filters=filters_list,
+        fields=["name", "presenter", "status", "total_amount"],
     )
 
-    # Calculate average time variance for each presenter
-    for row in data:
-        variance_data = frappe.db.sql(
-            """
-            SELECT AVG(bl.variance_seconds) as avg_variance
-            FROM `tabBroadcast Log` bl
-            JOIN `tabAdvertisement Broadcast` ab ON bl.parent = ab.name
-            WHERE ab.presenter = %s AND bl.variance_seconds IS NOT NULL
-        """,
-            row.presenter,
-        )
+    if not ads:
+        return []
 
-        if variance_data and variance_data[0][0]:
+    stats = {}
+    for ad in ads:
+        presenter = ad.presenter
+        if presenter not in stats:
+            stats[presenter] = {
+                "presenter": presenter,
+                "total_scheduled": 0,
+                "total_aired": 0,
+                "total_missed": 0,
+                "success_rate": 0,
+                "revenue_generated": 0,
+                "revenue_lost": 0,
+                "avg_time_variance": 0,
+                "_variance_sum": 0,
+                "_variance_count": 0,
+            }
+
+        row = stats[presenter]
+        row["total_scheduled"] += 1
+
+        if ad.status == "Aired":
+            row["total_aired"] += 1
+            row["revenue_generated"] += flt(ad.total_amount or 0)
+        elif ad.status == "Missed":
+            row["total_missed"] += 1
+            row["revenue_lost"] += flt(ad.total_amount or 0)
+
+    parent_presenter = {ad.name: ad.presenter for ad in ads}
+    logs = frappe.get_all(
+        "Broadcast Log",
+        filters={
+            "parent": ("in", list(parent_presenter.keys())),
+            "variance_seconds": ["is", "set"],
+        },
+        fields=["parent", "variance_seconds"],
+    )
+
+    for log in logs:
+        presenter = parent_presenter.get(log.parent)
+        if not presenter:
+            continue
+        row = stats[presenter]
+        row["_variance_sum"] += flt(log.variance_seconds or 0)
+        row["_variance_count"] += 1
+
+    data = []
+    for row in stats.values():
+        if row["total_scheduled"]:
+            row["success_rate"] = round(
+                (row["total_aired"] * 100.0) / row["total_scheduled"], 2
+            )
+        if row["_variance_count"]:
             row["avg_time_variance"] = round(
-                variance_data[0][0] / 60, 2
-            )  # Convert to minutes
-        else:
-            row["avg_time_variance"] = 0
+                (row["_variance_sum"] / row["_variance_count"]) / 60, 2
+            )
+        row.pop("_variance_sum", None)
+        row.pop("_variance_count", None)
+        data.append(row)
 
+    data.sort(key=lambda x: x["success_rate"], reverse=True)
     return data
-
 
 

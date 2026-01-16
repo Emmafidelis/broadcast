@@ -1,6 +1,63 @@
 import frappe
 from frappe import _
-from frappe.utils import now_datetime, get_datetime, cstr
+from frappe.utils import now_datetime, get_datetime, add_to_date, cstr
+from datetime import timedelta
+
+
+def _get_ads_between(start_dt, end_dt, filters, fields):
+    start_date = start_dt.date()
+    end_date = end_dt.date()
+    start_time = start_dt.time().strftime("%H:%M:%S")
+    end_time = end_dt.time().strftime("%H:%M:%S")
+
+    def _fetch(extra_filters):
+        return frappe.get_all(
+            "Advertisement Broadcast",
+            fields=fields,
+            filters=filters + extra_filters,
+            order_by="scheduled_date, scheduled_time",
+        )
+
+    if start_date == end_date:
+        return _fetch(
+            [
+                ["scheduled_date", "=", start_date.isoformat()],
+                ["scheduled_time", "between", [start_time, end_time]],
+            ]
+        )
+
+    records = []
+    seen = set()
+
+    chunks = [
+        _fetch(
+            [
+                ["scheduled_date", "=", start_date.isoformat()],
+                ["scheduled_time", ">=", start_time],
+            ]
+        ),
+        _fetch(
+            [
+                ["scheduled_date", "=", end_date.isoformat()],
+                ["scheduled_time", "<=", end_time],
+            ]
+        ),
+    ]
+
+    if (end_date - start_date).days > 1:
+        mid_start = (start_date + timedelta(days=1)).isoformat()
+        mid_end = (end_date - timedelta(days=1)).isoformat()
+        chunks.append(
+            _fetch([["scheduled_date", "between", [mid_start, mid_end]]])
+        )
+
+    for chunk in chunks:
+        for row in chunk:
+            if row.name not in seen:
+                seen.add(row.name)
+                records.append(row)
+
+    return records
 import json
 
 
@@ -97,37 +154,29 @@ def get_scheduled_broadcasts(hours_ahead=24):
         hours_ahead = frappe.utils.cint(hours_ahead) or 24
 
         # Use frappe's date utilities
-        from frappe.utils import add_to_date
-
         start_time = now_datetime()
         end_time = add_to_date(start_time, hours=hours_ahead)
 
-        # Use frappe.db for database queries with proper escaping
-        broadcasts = frappe.db.sql(
-            """
-            SELECT 
-                name, 
-                advertisement_title, 
-                customer, 
-                scheduled_date, 
-                scheduled_time, 
-                duration_seconds, 
-                presenter,
-                priority,
-                total_amount,
-                audio_file,
-                autoplay_enabled,
-                payment_status,
-                sales_order,
-                sales_invoice
-            FROM `tabAdvertisement Broadcast`
-            WHERE status = 'Scheduled'
-            AND docstatus = 1
-            AND TIMESTAMP(scheduled_date, scheduled_time) BETWEEN %s AND %s
-            ORDER BY scheduled_date, scheduled_time
-        """,
-            (start_time, end_time),
-            as_dict=True,
+        broadcasts = _get_ads_between(
+            start_time,
+            end_time,
+            filters=[["status", "=", "Scheduled"], ["docstatus", "=", 1]],
+            fields=[
+                "name",
+                "advertisement_title",
+                "customer",
+                "scheduled_date",
+                "scheduled_time",
+                "duration_seconds",
+                "presenter",
+                "priority",
+                "total_amount",
+                "audio_file",
+                "autoplay_enabled",
+                "payment_status",
+                "sales_order",
+                "sales_invoice",
+            ],
         )
 
         # Check read permissions for each record

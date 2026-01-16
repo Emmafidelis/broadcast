@@ -1,5 +1,95 @@
 import frappe
 from frappe.utils import now_datetime, get_datetime, add_to_date
+from datetime import timedelta
+
+
+def _get_ads_between(start_dt, end_dt, filters, fields):
+    start_date = start_dt.date()
+    end_date = end_dt.date()
+    start_time = start_dt.time().strftime("%H:%M:%S")
+    end_time = end_dt.time().strftime("%H:%M:%S")
+
+    def _fetch(extra_filters):
+        return frappe.get_all(
+            "Advertisement Broadcast",
+            fields=fields,
+            filters=filters + extra_filters,
+            order_by="scheduled_date, scheduled_time",
+        )
+
+    if start_date == end_date:
+        return _fetch(
+            [
+                ["scheduled_date", "=", start_date.isoformat()],
+                ["scheduled_time", "between", [start_time, end_time]],
+            ]
+        )
+
+    records = []
+    seen = set()
+
+    chunks = [
+        _fetch(
+            [
+                ["scheduled_date", "=", start_date.isoformat()],
+                ["scheduled_time", ">=", start_time],
+            ]
+        ),
+        _fetch(
+            [
+                ["scheduled_date", "=", end_date.isoformat()],
+                ["scheduled_time", "<=", end_time],
+            ]
+        ),
+    ]
+
+    if (end_date - start_date).days > 1:
+        mid_start = (start_date + timedelta(days=1)).isoformat()
+        mid_end = (end_date - timedelta(days=1)).isoformat()
+        chunks.append(
+            _fetch([["scheduled_date", "between", [mid_start, mid_end]]])
+        )
+
+    for chunk in chunks:
+        for row in chunk:
+            if row.name not in seen:
+                seen.add(row.name)
+                records.append(row)
+
+    return records
+
+
+def _get_ads_before(threshold_dt, filters, fields):
+    date_str = threshold_dt.date().isoformat()
+    time_str = threshold_dt.time().strftime("%H:%M:%S")
+
+    records = []
+    seen = set()
+
+    chunks = [
+        frappe.get_all(
+            "Advertisement Broadcast",
+            fields=fields,
+            filters=filters + [["scheduled_date", "<", date_str]],
+        ),
+        frappe.get_all(
+            "Advertisement Broadcast",
+            fields=fields,
+            filters=filters
+            + [
+                ["scheduled_date", "=", date_str],
+                ["scheduled_time", "<", time_str],
+            ],
+        ),
+    ]
+
+    for chunk in chunks:
+        for row in chunk:
+            if row.name not in seen:
+                seen.add(row.name)
+                records.append(row)
+
+    return records
 
 
 def mark_missed_advertisements():
@@ -16,21 +106,17 @@ def mark_missed_advertisements():
     # Find advertisements that should be marked as missed
     threshold_time = add_to_date(now_datetime(), hours=-threshold_hours)
 
-    missed_ads = frappe.db.sql(
-        """
-        SELECT name 
-        FROM `tabAdvertisement Broadcast`
-        WHERE status = 'Scheduled'
-        AND CONCAT(scheduled_date, ' ', scheduled_time) < %s
-        AND docstatus = 1
-        AND IFNULL(repeat_interval_minutes, 0) = 0
-    """,
-        (threshold_time,),
+    missed_ads = _get_ads_before(
+        threshold_time,
+        filters=[["status", "=", "Scheduled"], ["docstatus", "=", 1]],
+        fields=["name", "repeat_interval_minutes"],
     )
 
-    for ad_name in missed_ads:
+    for ad in missed_ads:
+        if ad.repeat_interval_minutes:
+            continue
         try:
-            ad_doc = frappe.get_doc("Advertisement Broadcast", ad_name[0])
+            ad_doc = frappe.get_doc("Advertisement Broadcast", ad.name)
             ad_doc.status = "Missed"
             ad_doc.save(ignore_permissions=True)
 
@@ -80,23 +166,23 @@ def check_autoplay_queue():
         current_time = now_datetime()
         check_until = add_to_date(current_time, minutes=5)
 
-        # Get ads scheduled in next 5 minutes
-        upcoming_ads = frappe.db.sql(
-            """
-            SELECT name
-            FROM `tabAdvertisement Broadcast`
-            WHERE (
-                status = 'Scheduled'
-                OR (status = 'Aired' AND IFNULL(repeat_interval_minutes, 0) > 0)
-            )
-            AND docstatus = 1
-            AND autoplay_enabled = 1
-            AND TIMESTAMP(scheduled_date, scheduled_time) BETWEEN %s AND %s
-            ORDER BY scheduled_date, scheduled_time
-        """,
-            (current_time, check_until),
-            as_dict=True,
+        base_filters = [["docstatus", "=", 1], ["autoplay_enabled", "=", 1]]
+        scheduled_ads = _get_ads_between(
+            current_time,
+            check_until,
+            filters=base_filters + [["status", "=", "Scheduled"]],
+            fields=["name", "repeat_interval_minutes"],
         )
+        repeating_ads = _get_ads_between(
+            current_time,
+            check_until,
+            filters=base_filters + [["status", "=", "Aired"]],
+            fields=["name", "repeat_interval_minutes"],
+        )
+
+        upcoming_ads = scheduled_ads + [
+            ad for ad in repeating_ads if (ad.repeat_interval_minutes or 0) > 0
+        ]
 
         for ad in upcoming_ads:
             try:
@@ -243,25 +329,21 @@ def generate_daily_report():
         report_date = add_days(today(), -1)
 
         # Get all advertisements for yesterday
-        ads = frappe.db.sql(
-            """
-            SELECT
-                name,
-                advertisement_title,
-                customer,
-                scheduled_date,
-                scheduled_time,
-                duration_seconds,
-                presenter,
-                status,
-                total_amount
-            FROM `tabAdvertisement Broadcast`
-            WHERE scheduled_date = %s
-            AND docstatus = 1
-            ORDER BY scheduled_time
-        """,
-            (report_date,),
-            as_dict=True,
+        ads = frappe.get_all(
+            "Advertisement Broadcast",
+            filters={"scheduled_date": report_date, "docstatus": 1},
+            fields=[
+                "name",
+                "advertisement_title",
+                "customer",
+                "scheduled_date",
+                "scheduled_time",
+                "duration_seconds",
+                "presenter",
+                "status",
+                "total_amount",
+            ],
+            order_by="scheduled_time",
         )
 
         if not ads:
