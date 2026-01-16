@@ -137,34 +137,29 @@ app_license = "mit"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+    "Advertisement Broadcast": {
+        "on_submit": "broadcast.broadcast.api.notify_detection_system",
+        "on_cancel": "broadcast.broadcast.api.cancel_detection_monitoring",
+        "after_insert": "broadcast.broadcast.api.send_scheduling_notification",
+    },
+    "Sales Invoice": {
+        "on_update": "broadcast.broadcast.api.sync_ad_payment_status_from_invoice",
+        "on_cancel": "broadcast.broadcast.api.sync_ad_payment_status_from_invoice",
+    },
+}
 
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"broadcast.tasks.all"
-# 	],
-# 	"daily": [
-# 		"broadcast.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"broadcast.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"broadcast.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"broadcast.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+    "hourly": ["broadcast.broadcast.tasks.mark_missed_advertisements"],
+    "daily": ["broadcast.broadcast.tasks.generate_daily_report"],
+    "cron": {
+        "*/5 * * * *": ["broadcast.broadcast.tasks.check_autoplay_queue"],
+        "0 */2 * * *": ["broadcast.broadcast.api.sync_detection_system"],
+    },
+}
 
 # Testing
 # -------
@@ -241,4 +236,3 @@ app_license = "mit"
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
-
