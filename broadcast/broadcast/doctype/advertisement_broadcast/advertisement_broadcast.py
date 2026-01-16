@@ -25,8 +25,6 @@ class AdvertisementBroadcast(Document):
 		self.sync_status_from_context()
 		self.validate_status_transition()
 
-		# Handle auto_generate_invoice checkbox functionality
-
 	def before_save(self):
 		"""Called before saving document"""
 		self.calculate_variance_for_logs()
@@ -54,8 +52,6 @@ class AdvertisementBroadcast(Document):
 		if not self.sales_order:
 			self.create_sales_order()
 
-		if self.auto_generate_invoice and self.status == "Aired":
-			self.create_sales_invoice()
 
 	def on_cancel(self):
 		"""Called when document is cancelled"""
@@ -142,11 +138,6 @@ class AdvertisementBroadcast(Document):
 	def on_aired(self):
 		"""Actions when advertisement is marked as aired"""
 		# Auto-generate invoice if enabled and paid
-		if self.auto_generate_invoice and not self.sales_invoice:
-			try:
-				self.create_sales_invoice()
-			except Exception as e:
-				frappe.log_error(f"Auto-invoice generation failed: {str(e)}", "Advertisement Broadcast")
 
 		# Mark notification as sent (since broadcast completed)
 		self.mark_notification_sent()
@@ -404,9 +395,6 @@ class AdvertisementBroadcast(Document):
 		# Broadcast confirmation notification removed for better UX
 		# Status change is sufficient indication
 
-		# Auto-generate invoice if enabled
-		if self.auto_generate_invoice:
-			self.create_sales_invoice()
 
 	def send_broadcast_confirmation(self):
 		"""DEPRECATED: Confirmation notification removed for better UX"""
@@ -501,9 +489,6 @@ class AdvertisementBroadcast(Document):
 
 		if not self.audio_file:
 			return {"allowed": False, "reason": "No media file uploaded"}
-
-		if self.payment_status != "Paid":
-			return {"allowed": False, "reason": f"Payment not completed. Status: {self.payment_status}"}
 
 		if self.status not in ["Scheduled", "Aired"]:
 			return {"allowed": False, "reason": f"Invalid status: {self.status}"}

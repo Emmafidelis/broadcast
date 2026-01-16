@@ -111,15 +111,6 @@ frappe.ui.form.on('Advertisement Broadcast', {
         if (frm.doc.autoplay_enabled && !frm.doc.audio_file) {
             frappe.msgprint(__('Please upload a media file to enable autoplay.'));
         }
-    },
-
-    status: function(frm) {
-        if (frm.doc.status === 'Aired' && frm.doc.auto_generate_invoice && !frm.doc.sales_invoice) {
-            frm.call('create_sales_invoice').then(() => {
-                frappe.show_alert({message: __('Invoice auto-generated'), indicator: 'green'});
-                frm.reload_doc();
-            });
-        }
     }
 });
 
