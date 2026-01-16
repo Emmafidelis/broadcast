@@ -1,0 +1,236 @@
+{
+ "actions": [],
+ "allow_events_in_timeline": 1,
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "naming_series:naming_series",
+ "creation": "2025-09-14 00:00:00",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "customer",
+  "scheduled_date",
+  "scheduled_time",
+  "duration_seconds",
+  "rate_per_second",
+  "sales_order",
+  "sales_invoice",
+  "column_break_hkir",
+  "presenter",
+  "advertisement_title",
+  "status",
+  "priority",
+  "total_amount",
+  "payment_status",
+  "auto_generate_invoice",
+  "notification_sent",
+  "section_break_media",
+  "audio_file",
+  "autoplay_enabled",
+  "section_break_tydi",
+  "advertisement_content",
+  "section_break_grch",
+  "broadcast_logs",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "ADB-.YYYY.-",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "presenter",
+   "fieldtype": "Link",
+   "label": "Presenter",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "advertisement_title",
+   "fieldtype": "Data",
+   "label": "Advertisement Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "scheduled_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Scheduled Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "scheduled_time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Scheduled Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "duration_seconds",
+   "fieldtype": "Int",
+   "label": "Duration (Seconds)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rate_per_second",
+   "fieldtype": "Currency",
+   "label": "Rate Per Second",
+   "reqd": 1
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "\nDraft\nScheduled\nAired\nMissed\nCancelled",
+   "reqd": 1
+  },
+  {
+   "default": "Medium",
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "label": "Priority",
+   "options": "\nLow\nMedium\nHigh\nUrgent"
+  },
+  {
+   "fieldname": "advertisement_content",
+   "fieldtype": "Text Editor",
+   "label": "Advertisement Content"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "broadcast_logs",
+   "fieldtype": "Table",
+   "label": "Broadcast Logs",
+   "options": "Broadcast Log"
+  },
+  {
+   "fieldname": "sales_order",
+   "fieldtype": "Link",
+   "label": "Sales Order",
+   "options": "Sales Order",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sales_invoice",
+   "fieldtype": "Link",
+   "label": "Sales Invoice",
+   "options": "Sales Invoice",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_status",
+   "fieldtype": "Select",
+   "label": "Payment Status",
+   "options": "\nUnpaid\nPartially Paid\nPaid\nOverdue",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "1",
+   "fieldname": "auto_generate_invoice",
+   "fieldtype": "Check",
+   "label": "Auto Generate Invoice"
+  },
+  {
+   "default": "0",
+   "fieldname": "notification_sent",
+   "fieldtype": "Check",
+   "label": "Notification Sent",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_hkir",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_media",
+   "fieldtype": "Section Break",
+   "label": "Media Files"
+  },
+  {
+   "fieldname": "audio_file",
+   "fieldtype": "Attach",
+   "label": "Media File",
+   "description": "Upload media for broadcast (audio, video, animation, etc.)"
+  },
+  {
+   "default": "1",
+   "fieldname": "autoplay_enabled",
+   "fieldtype": "Check",
+   "label": "Enable Autoplay",
+   "description": "Automatically play this ad at scheduled time (requires payment)"
+  },
+  {
+   "fieldname": "section_break_tydi",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_grch",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Advertisement Broadcast",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-09-15 23:52:52.270799",
+ "modified_by": "Administrator",
+ "module": "Broadcast",
+ "name": "Advertisement Broadcast",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "advertisement_title",
+ "track_changes": 1,
+ "track_seen": 1,
+ "track_views": 1
+}
