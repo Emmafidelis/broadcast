@@ -1,0 +1,65 @@
+{
+ "actions": [],
+ "creation": "2025-09-14 18:26:37.250515",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "min_detection_confidence",
+  "auto_mark_missed_after_hours",
+  "default_reminder_hours",
+  "enable_auto_invoicing"
+ ],
+ "fields": [
+  {
+   "default": "80",
+   "description": "Minimum confidence level for auto-detected broadcasts",
+   "fieldname": "min_detection_confidence",
+   "fieldtype": "Percent",
+   "label": "Minimum Detection Confidence"
+  },
+  {
+   "default": "2",
+   "description": "Automatically mark ads as missed if not logged within this time",
+   "fieldname": "auto_mark_missed_after_hours",
+   "fieldtype": "Int",
+   "label": "Auto Mark Missed After (Hours)"
+  },
+  {
+   "default": "1",
+   "description": "Send reminder notifications this many hours before broadcast",
+   "fieldname": "default_reminder_hours",
+   "fieldtype": "Float",
+   "label": "Default Reminder Hours Before"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_auto_invoicing",
+   "fieldtype": "Check",
+   "label": "Enable Auto Invoicing"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-09-14 18:27:21.078661",
+ "modified_by": "Administrator",
+ "module": "Broadcast",
+ "name": "Broadcasting Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
