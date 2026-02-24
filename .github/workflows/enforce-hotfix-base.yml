@@ -31,6 +31,17 @@ jobs:
               return;
             }
 
+            const title = context.payload.pull_request.title || '';
+            const author = context.payload.pull_request.user?.login || '';
+            const isAutomatedBackport =
+              title.startsWith(`[Backport ${base}]`) &&
+              (author === 'github-actions[bot]' || author.endsWith('[bot]'));
+
+            if (isAutomatedBackport) {
+              core.info(`Allowing automated backport PR '${title}' to '${base}'.`);
+              return;
+            }
+
             const issue_number = context.payload.pull_request.number;
             const { owner, repo } = context.repo;
             const disallowedText = disallowed.map((b) => `\`${b}\``).join(', ');
